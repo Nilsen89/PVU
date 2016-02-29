@@ -5,37 +5,40 @@
 import json
 import time
 
-first = True
-
-def main():
-	url = "../data/test.json"
-	open_file(url)
-
-def open_file(url):
-	
-	data = []
-	json_data = []
-	old_timestamp = 0
-	
-	with open(url) as f:
-		data.extend(f.readlines())
-		f.close()
-	for i in range(len(data)):
-		json_data = json.loads(data[i])
-		old_timestamp = sleeper(json_data["timestamp"], old_timestamp)
+class FileReader:
+	def __init__(self, url):
+		self.url = url
+		self.first = True
+		self.results = []
 		
-		print json_data["name"]
-		print json_data["value"]
-		print json_data["timestamp"]
+	def sleeper(self, cur_timestamp, old_timestamp):
+		if not self.first:
+			if cur_timestamp > old_timestamp:
+				time.sleep(cur_timestamp-old_timestamp)
+		else:
+			self.first = not self.first
+			old_timestamp = cur_timestamp
+		return old_timestamp
 		
-def sleeper(cur_timestamp, old_timestamp):
-	global first
-	if not first:
-		if cur_timestamp > old_timestamp:
-			time.sleep(cur_timestamp-old_timestamp)
-	else:
-		first = not first
-		old_timestamp = cur_timestamp
-	return old_timestamp
-	
-main()
+	def open_and_read_file(self):
+		
+		data = []
+		json_data = []
+		old_timestamp = 0
+		
+		with open(self.url) as f:
+			data.extend(f.readlines())
+			f.close()
+		for i in range(len(data)):
+			json_data = json.loads(data[i])
+			old_timestamp = self.sleeper(json_data["timestamp"], old_timestamp)
+
+			self.results.append([json_data["name"], json_data["value"], json_data["timestamp"]])
+			
+		print "--::READ DONE::--"
+		
+	def getResults(self):
+		return self.results
+		
+FileReader = FileReader("../data/test.json")
+FileReader.open_and_read_file()
